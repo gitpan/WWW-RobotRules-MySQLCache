@@ -1,0 +1,30 @@
+RobotDB version 0.01
+====================
+One can store multiple parsed robots.txt rules in a MySQL database. 
+It uses DBI and WWW::RobotRules::Parser to fetch robots.txt and extract rules and LWP::Simple to test freshness of a robots.txt file.
+
+INSTALLATION
+
+To install this module type the following:
+
+   perl Makefile.PL
+   make
+   make test
+   make install
+
+DEPENDENCIES
+
+This module requires these other modules and libraries:
+
+ DBI, WWW::RobotRules::Parser, WWW::LWP::Simple
+
+COPYRIGHT AND LICENCE
+
+Put the correct copyright and licence information here.
+
+Copyright (C) 2006 by A. M. Patwa.
+(Thanks to Alexandr Ciornii for all the help!)
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself, either Perl version 5.8.8 or,
+at your option, any later version of Perl 5 you may have available.

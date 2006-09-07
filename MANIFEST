@@ -1,0 +1,7 @@
+Changes
+lib/WWW/RobotRules/MySQLCache.pm
+Makefile.PL
+MANIFEST			This list of files
+META.yml
+README
+t/RobotDB.t

@@ -1,0 +1,6 @@
+Revision history for Perl extension RobotDB.
+
+0.01  Fri Sep  1 13:08:16 2006
+	- original version; created by h2xs 1.23 with options
+		-AXc -n RobotDB
+
