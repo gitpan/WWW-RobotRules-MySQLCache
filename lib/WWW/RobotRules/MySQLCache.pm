@@ -18,7 +18,7 @@ use Exporter;
 use vars qw/%tables/;
 # @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } ); #do not export anything
 
-$VERSION = '0.01';
+$VERSION = '0.02';
 
 sub new{
 	my $class = shift;
@@ -38,7 +38,7 @@ sub new{
 sub create_db{
 	my $self = shift;
 	my $create_location = "CREATE TABLE location(robot_id integer PRIMARY KEY auto_increment not null, location varchar(255) not null, created_on datetime not null)";
-	$self->{'db'}->do($create_location)  or die "Unable to create table `location`";
+	$self->{'db'}->do($create_location)  or die "Unable to create table `location`.";
 	my $create_rules = "CREATE TABLE rules(robot_id integer not null, userAgent varchar(255) not null, rule_loc varchar(255) not null)";
         $self->{'db'}->do($create_rules) or die "Unable to create table `rules`";
 	1;
@@ -50,31 +50,32 @@ sub load_db{
 	#if not updated, update it
 	my $self = shift;
 	my $url = shift;
+	$url =~ s/\/$//;
 	my $robot_url = $url . "/robots.txt";
   	my $parser = WWW::RobotRules::Parser->new;
 	my $modified_time = $self->formatted_date_time($robot_url);
-	my $select1 = $self->{'db'}->prepare("SELECT robot_id from location where location = '".$url."'");
-	$select1->execute();
-	my $select2 = $self->{'db'}->prepare("SELECT robot_id from location where location = '".$url."' and  created_on  = '".$modified_time."'");
-	$select2->execute();
+	my $select1 = $self->{'db'}->prepare("SELECT robot_id from location where location = '".$url."'")   or die "Couldn't prepare statement: " . $self->{'db'}->errstr;
+	$select1->execute()  or die "Couldn't execute statement: " . $select1->errstr;
+	my $select2 = $self->{'db'}->prepare("SELECT robot_id from location where location = '".$url."' and  created_on  = '".$modified_time."'")    or die "Couldn't prepare statement: " . $self->{'db'}->errstr;
+	$select2->execute()  or die "Couldn't execute statement: " . $select2->errstr;
 	my $rows1 = $select1->rows;
 	my $rows2 = $select2->rows;
 	my $robot_id;
 	if($rows1 == 0){	
 		my %rules = $parser->parse_uri($robot_url);
-		my $insert = $self->{'db'}->prepare("INSERT into location (location,created_on) values ('$url','$modified_time')");
+		my $insert = $self->{'db'}->prepare("INSERT into location (location,created_on) values ('$url','$modified_time')")    or die "Couldn't prepare statement: " . $self->{'db'}->errstr;
 		#	print "INSERT into location (location,created_on) values ('".$url."','".$modified_time."')";
-		$insert->execute();
-		my $select3 = $self->{'db'}->prepare("SELECT robot_id from location where location = '".$url."' and  created_on  = '".$modified_time."'");
-		$select3->execute();
+		$insert->execute() or die "Couldn't execute statement: " . $insert->errstr;
+		my $select3 = $self->{'db'}->prepare("SELECT robot_id from location where location = '".$url."' and  created_on  = '".$modified_time."'")   or die "Couldn't prepare statement: " . $self->{'db'}->errstr;
+		$select3->execute()  or die "Couldn't execute statement: " . $select3->errstr;
 		if(my $row = $select3->fetchrow_hashref()){
 			$robot_id = $row->{'robot_id'};
 		}
 		foreach (my ($key, $value) = each %rules) {
 			foreach(@$value){
-				my $insert_rules = $self->{'db'}->prepare("INSERT into rules VALUES($robot_id,'".$key."','".$_."')");
+				my $insert_rules = $self->{'db'}->prepare("INSERT into rules VALUES($robot_id,'".$key."','".$_."')")   or die "Couldn't prepare statement: " . $self->{'db'}->errstr;
 				#print "\nINSERT into rules VALUES($robot_id,'".$agent."','".$url.$_."')";#	print "\tINSERT into rules ($robot_id,'".$agent."','".$url.$_."')\n";
-				$insert_rules->execute();
+				$insert_rules->execute()  or die "Couldn't execute statement: " . $insert_rules->errstr;
 			}
 		}
 	}
@@ -85,9 +86,9 @@ sub load_db{
 		my %rules = $parser->parse_uri($robot_url);	
 		foreach (my ($key, $value) = each %rules) {
 			foreach(@$value){ 		   		
-					my $insert_rules = $self->{'db'}->prepare("INSERT into rules VALUES(".$row->{'robot_id'}.",'".$key."','".$_."')");
+					my $insert_rules = $self->{'db'}->prepare("INSERT into rules VALUES(".$row->{'robot_id'}.",'".$key."','".$_."')")   or die "Couldn't prepare statement: " . $self->{'db'}->errstr;
 					#print "\nINSERT into rules VALUES(".$row->{'robot_id'}.",'".$agent."','".$url.$_."')";
-					$insert_rules->execute();
+					$insert_rules->execute()  or die "Couldn't execute statement: " . $insert_rules->errstr;
 			}
 		}
 		
@@ -118,11 +119,12 @@ sub formatted_date_time{
 sub  is_present{
 	my $self = shift;
 	my $location = shift;
+	$location =~ s/\/$//;
 	my $modified_time = $self->formatted_date_time($location."/robots.txt");
-	my $string = "SELECT * from location where location = $location and created_on = '".$modified_time."'";
-        my $search = $self->{'db'}->prepare($string);
+	my $string = "SELECT * from location where location = '$location' and created_on = '".$modified_time."'";
+        my $search = $self->{'db'}->prepare($string)   or die "Couldn't prepare statement: " . $self->{'db'}->errstr;
 	my $result;
-	$search->execute();
+	$search->execute()  or die "Couldn't execute statement: " . $search->errstr;
 	if($search->rows == 0){
                 $result = 0;
         }
@@ -147,8 +149,8 @@ sub is_allowed{
 	#print "\n".$protocol.'://'.$domain_name.$port;
 	my $query = "select rules.* from rules,location where (location REGEXP '".$protocol."://".$domain_name.$port."' OR location REGEXP '".$protocol."://www.".$domain_name.$port."')and rules.robot_id = location.robot_id  and (userAgent = '*' or userAgent = '".$user_agent."')";
 	#print "\n".$query."\n";
-	my $site = $self->{db}->prepare($query);
-	$site->execute();
+	my $site = $self->{db}->prepare($query)   or die "Couldn't prepare statement: " . $self->{'db'}->errstr;
+	$site->execute()  or die "Couldn't execute statement: " . $site->errstr;
 	my $row;
 	while($row = $site->fetchrow_hashref()){
 		if(index($uri,$row->{'rule_loc'}) >=0) {
@@ -177,10 +179,10 @@ __END__
   
   $rulesDB->create_db(); # if a database needs to be created.
   
-  if($robots_txt_is_present_at_a_location)
+  if(### your check of robots_txt is present for a server###)
   	$rulesDB->load_db($location);
   
-  my $file_present = is_present($location, $lastUpdated);
+  my $file_present = is_present($location);
 
   my $flag = $rulesDB->is_allowed($user_agent,$url_or_folder);
   #OR
@@ -196,7 +198,8 @@ __END__
 
 	One can store multiple parsed robots.txt rules in a MySQL database. 
 
-	It uses DBI and WWW::RobotRules::Parser to fetch robots.txt and extract rules and LWP::Simple to test freshness of a robots.txt file.
+	It uses DBI and WWW::RobotRules::Parser to fetch robots.txt and extract rules and 
+        LWP::Simple to test freshness of a robots.txt file.
 
 
 =head1  METHODS
@@ -219,10 +222,11 @@ __END__
 =head2  load_db($location);
 
 	Loads rules from a robots.txt if we don't have them in the database.
-	If the copy of robots.txt in database is not consistent with the one just fetched from the server, the database is updated.
+	If the copy of robots.txt in database is not consistent with the one 
+        just fetched from the server, the database is updated.
 	
 
-=head2 my $file_present = is_present($location, $lastUpdated);
+=head2 my $file_present = is_present($location);
 
 	Checks if a particular robots.txt is present or not. 
 	Returns 0 if 
@@ -244,15 +248,13 @@ DBI, WWW::RobotRules::Parser, WWW::LWP::Simple
 
 =head1 AUTHOR
 
-A. M. Patwa, E<lt>patwa.ankur@gmail.comE<gt>
+A. M. Patwa, E<lt>patwa DOT ankur -AT- gmail DOT  comE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
 Copyright (C) 2006 by A. M. Patwa
 
 This library is free software; you can redistribute it and/or modify
-it under the same terms as Perl itself, either Perl version 5.8.8 or,
-at your option, any later version of Perl 5 you may have available.
-
+it under the same terms as Perl itself.
 
 =cut

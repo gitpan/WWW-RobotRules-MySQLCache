@@ -1,7 +1,8 @@
-RobotDB version 0.01
+RobotDB version 0.02
 ====================
 One can store multiple parsed robots.txt rules in a MySQL database. 
-It uses DBI and WWW::RobotRules::Parser to fetch robots.txt and extract rules and LWP::Simple to test freshness of a robots.txt file.
+It uses DBI and WWW::RobotRules::Parser to fetch robots.txt 
+and extract rules and LWP::Simple to test freshness of a robots.txt file.
 
 INSTALLATION
 

@@ -7,11 +7,11 @@ WriteMakefile(
     VERSION_FROM      => 'lib/WWW/RobotRules/MySQLCache.pm', # finds $VERSION
     PREREQ_PM         => {
      'DateTime::Format::Epoch' => 0,
-     DBI =>0,
+     'DBI' =>0,
      'LWP::Simple'=>0,
      'WWW::RobotRules::Parser'=>0,
     }, # e.g., Module::Name => 1.1
     ($] >= 5.005 ?     ## Add these new keywords supported since 5.005
-      (ABSTRACT_FROM  => 'lib/WWW/RobotRules/MySQLCache.pm', # retrieve abstract from module
-       AUTHOR         => 'A. M. Patwa <ankur@uccs.edu>') : ()),
+      (
+       AUTHOR         => 'A. M. Patwa <patwa DOT ankur -AT- gmail DOT com>') : ()),
 );
